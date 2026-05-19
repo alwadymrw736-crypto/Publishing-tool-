@@ -1,8 +1,11 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/api/oauth-callback", "destination": "/oauth-callback.js" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "oauth-callback.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/oauth-callback", "dest": "oauth-callback.js" },
+    { "src": "/(.*)", "dest": "index.html" }
   ]
 }
