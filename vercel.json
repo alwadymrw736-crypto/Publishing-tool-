@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "env": {
+    "NEXT_PUBLIC_BASE_URL": "https://publishing-tool-eight.vercel.app"
+  },
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "oauth-callback.js", "use": "@vercel/node" }
