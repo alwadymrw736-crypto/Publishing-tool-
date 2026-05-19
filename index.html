@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostFlow — انشر على الكل بضغطة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07080f;
+  --s1:#0e1018;
+  --s2:#141620;
+  --border:#1e2030;
+  --text:#eef0ff;
+  --muted:#4a4f6a;
+  --ig:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+  --fb:#1877f2;
+  --accent:#6c63ff;
+  --success:#00e676;
+  --err:#ff5252;
+  --warn:#ffb300;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 700px 500px at 70% 0%,rgba(108,99,255,0.07),transparent 60%),radial-gradient(ellipse 500px 400px at 10% 90%,rgba(220,39,67,0.05),transparent 60%);pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,8,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px}
+.nav-logo{font-size:20px;font-weight:900;background:var(--ig);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-right{display:flex;gap:10px;align-items:center}
+.btn-nav{padding:8px 18px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .2s}
+.btn-login{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-login:hover{border-color:var(--accent);color:var(--accent)}
+.btn-signup{background:var(--accent);color:#fff;box-shadow:0 4px 15px rgba(108,99,255,.3)}
+.btn-signup:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(108,99,255,.4)}
+#userNav{display:none;align-items:center;gap:12px}
+.user-email{font-size:13px;color:var(--muted)}
+.btn-logout{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;cursor:pointer}
+
+/* PAGES */
+.page{display:none;position:relative;z-index:1}
+.page.active{display:block}
+
+/* LANDING */
+.hero{text-align:center;padding:80px 20px 60px;max-width:700px;margin:0 auto}
+.hero-badge{display:inline-block;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.3);color:var(--accent);padding:6px 18px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:24px;animation:fadeUp .6s ease both}
+.hero h1{font-size:clamp(32px,5vw,58px);font-weight:900;line-height:1.15;margin-bottom:16px;animation:fadeUp .6s .1s ease both}
+.hero h1 span{background:var(--ig);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:17px;color:var(--muted);max-width:460px;margin:0 auto 36px;line-height:1.7;animation:fadeUp .6s .15s ease both}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeUp .6s .2s ease both}
+.btn-hero-main{padding:16px 36px;background:var(--ig);border:none;border-radius:14px;color:#fff;font-family:'Cairo',sans-serif;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 25px rgba(220,39,67,.3);transition:all .3s}
+.btn-hero-main:hover{transform:translateY(-2px);box-shadow:0 10px 35px rgba(220,39,67,.45)}
+.btn-hero-sec{padding:16px 36px;background:transparent;border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .3s}
+.btn-hero-sec:hover{border-color:var(--accent);color:var(--accent)}
+
+.platforms-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding:0 20px 60px;animation:fadeUp .6s .25s ease both}
+.plat-chip{display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--border);border-radius:40px;padding:10px 20px;font-size:14px;font-weight:600}
+.plat-dot{width:10px;height:10px;border-radius:50%}
+.dot-ig{background:linear-gradient(135deg,#f09433,#bc1888)}
+.dot-fb{background:#1877f2}
+.dot-tt{background:linear-gradient(135deg,#69C9D0,#EE1D52)}
+.dot-yt{background:#ff0000}
+
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:0 20px 80px;max-width:900px;margin:0 auto}
+.feat{background:var(--s1);border:1px solid var(--border);border-radius:18px;padding:28px;transition:all .3s}
+.feat:hover{border-color:var(--accent);transform:translateY(-3px)}
+.feat-icon{font-size:32px;margin-bottom:14px}
+.feat h3{font-size:16px;font-weight:700;margin-bottom:8px}
+.feat p{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* AUTH MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:24px;padding:36px;width:100%;max-width:420px;margin:20px;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275) both}
+.modal h2{font-size:24px;font-weight:900;margin-bottom:6px}
+.modal p{color:var(--muted);font-size:14px;margin-bottom:28px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.inp{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'Cairo',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--muted)}
+.btn-modal{width:100%;padding:15px;background:var(--accent);border:none;border-radius:12px;color:#fff;font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-modal:hover{background:#7c75ff;transform:translateY(-1px)}
+.modal-switch{text-align:center;margin-top:16px;font-size:13px;color:var(--muted)}
+.modal-switch a{color:var(--accent);cursor:pointer;text-decoration:none;font-weight:600}
+.modal-close{position:absolute;top:16px;left:16px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.modal-wrap{position:relative}
+
+/* APP */
+#appPage{padding:30px 16px 80px;max-width:800px;margin:0 auto}
+.app-header{margin-bottom:28px}
+.app-header h2{font-size:26px;font-weight:900}
+.app-header p{color:var(--muted);font-size:14px;margin-top:4px}
+
+/* CONNECT PLATFORMS */
+.connect-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+.conn-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;border:1px solid var(--border);background:var(--s1);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .3s;color:var(--text)}
+.conn-btn:hover{transform:translateY(-1px)}
+.conn-btn.connected{border-color:var(--success);color:var(--success)}
+.conn-btn.ig-btn:hover{border-color:#dc2743;color:#dc2743}
+.conn-btn.fb-btn:hover{border-color:#1877f2;color:#1877f2}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.conn-btn.connected .conn-dot{background:var(--success)}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:26px;margin-bottom:20px}
+.card-head{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;margin-bottom:20px}
+.c-icon{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:18px}
+
+/* UPLOAD */
+.drop{border:2px dashed var(--border);border-radius:14px;padding:44px 20px;text-align:center;cursor:pointer;transition:all .3s;background:rgba(255,255,255,.01)}
+.drop:hover,.drop.over{border-color:var(--accent);background:rgba(108,99,255,.05)}
+.drop input{display:none}
+.drop-ico{font-size:40px;margin-bottom:12px;display:block;animation:float 3s ease-in-out infinite}
+.drop h3{font-size:16px;font-weight:700;margin-bottom:6px}
+.drop p{font-size:13px;color:var(--muted)}
+.prev-wrap{display:none;border-radius:12px;overflow:hidden;background:#000}
+.prev-wrap video{width:100%;max-height:240px;display:block}
+.prev-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,.03);border-top:1px solid var(--border)}
+.prev-name{font-size:13px;font-weight:700}
+.prev-size{font-size:11px;color:var(--muted)}
+.btn-sm{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;transition:all .2s}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+
+/* TARGET PLATFORMS */
+.plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.plat-card{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:12px}
+.plat-card:hover{transform:translateY(-2px)}
+.plat-card.sel.ig{border-color:#dc2743;box-shadow:0 0 16px rgba(220,39,67,.15)}
+.plat-card.sel.fb{border-color:#1877f2;box-shadow:0 0 16px rgba(24,119,242,.15)}
+.plat-card.disabled{opacity:.35;cursor:not-allowed}
+.plat-logo{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ig-logo{background:var(--ig)}
+.fb-logo{background:#1877f2}
+.tt-logo{background:linear-gradient(135deg,#69C9D0,#EE1D52)}
+.yt-logo{background:#ff0000}
+.plat-info{flex:1}
+.plat-name{font-size:14px;font-weight:700}
+.plat-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.plat-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;transition:all .3s}
+.plat-card.sel .plat-check{background:var(--success);border-color:var(--success);color:#000}
+.coming{font-size:10px;background:rgba(255,255,255,.05);border:1px solid var(--border);padding:2px 8px;border-radius:4px;color:var(--muted)}
+
+/* CAPTION */
+textarea.inp{resize:vertical;min-height:90px;line-height:1.6}
+.char{font-size:11px;color:var(--muted);text-align:left;margin-top:6px}
+.btn-ai{width:100%;padding:13px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-top:10px}
+.btn-ai:hover:not(:disabled){background:rgba(255,255,255,.09);transform:translateY(-1px)}
+.btn-ai:disabled{opacity:.4;cursor:not-allowed}
+
+/* PUBLISH BTN */
+.btn-pub{width:100%;padding:20px;border:none;border-radius:16px;font-family:'Cairo',sans-serif;font-size:17px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .3s;background:var(--ig);color:#fff;box-shadow:0 6px 28px rgba(220,39,67,.3)}
+.btn-pub:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 12px 40px rgba(220,39,67,.5)}
+.btn-pub:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* PROGRESS */
+.prog-wrap{display:none;margin-top:16px}
+.prog-top{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px}
+.prog-bar{height:6px;background:var(--s2);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:var(--ig);border-radius:3px;width:0%;transition:width .5s}
+
+/* STATUS */
+.status{border-radius:14px;padding:16px 18px;font-size:14px;font-weight:600;display:none;align-items:flex-start;gap:10px;margin-top:14px;line-height:1.6}
+.status.ok{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);color:var(--success);display:flex}
+.status.err{background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);color:var(--err);display:flex}
+.status.info{background:rgba(255,179,0,.08);border:1px solid rgba(255,179,0,.2);color:var(--warn);display:flex}
+
+/* SPINNER */
+.spin{width:18px;height:18px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:rotate .7s linear infinite;display:none;flex-shrink:0}
+
+/* HISTORY */
+.hist-item{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.hist-icon{font-size:22px}
+.hist-info{flex:1}
+.hist-title{font-size:13px;font-weight:700}
+.hist-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.hist-status{font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px}
+.hist-ok{background:rgba(0,230,118,.1);color:var(--success)}
+.hist-err{background:rgba(255,82,82,.1);color:var(--err)}
+
+/* NOTIF */
+.notif{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:13px 22px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;transition:transform .4s cubic-bezier(.175,.885,.32,1.275);z-index:999;box-shadow:0 10px 40px rgba(0,0,0,.6);white-space:nowrap}
+.notif.show{transform:translateX(-50%) translateY(0)}
+.notif.ok{border-color:var(--success);color:var(--success)}
+.notif.bad{border-color:var(--err);color:var(--err)}
+
+/* STEPS */
+.steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:28px;flex-wrap:wrap;row-gap:10px}
+.stp{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--muted)}
+.stp.on{color:var(--accent)}
+.stp.done{color:var(--success)}
+.stp-n{width:26px;height:26px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.stp.on .stp-n{background:var(--accent);border-color:var(--accent);color:#fff}
+.stp.done .stp-n{background:var(--success);border-color:var(--success);color:#000}
+.stp-line{width:28px;height:2px;background:var(--border);margin:0 5px}
+
+@media(max-width:500px){.plat-grid{grid-template-columns:1fr}.hero-btns{flex-direction:column;align-items:center}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes rotate{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">PostFlow ✦</div>
+  <div class="nav-right" id="guestNav">
+    <button class="btn-nav btn-login" onclick="openModal('login')">تسجيل دخول</button>
+    <button class="btn-nav btn-signup" onclick="openModal('signup')">ابدأ مجاناً</button>
+  </div>
+  <div id="userNav">
+    <span class="user-email" id="userEmail"></span>
+    <button class="btn-logout" onclick="logout()">خروج</button>
+  </div>
+</nav>
+
+<!-- LANDING PAGE -->
+<div class="page active" id="landingPage">
+  <div class="hero">
+    <div class="hero-badge">🚀 انشر على كل المنصات بضغطة واحدة</div>
+    <h1>فيديو واحد<br><span>يصل للجميع</span></h1>
+    <p>ارفع فيديوك مرة واحدة وانشره على إنستا وفيسبوك في نفس الوقت — مع كابشن مخصص لكل منصة بالذكاء الاصطناعي</p>
+    <div class="hero-btns">
+      <button class="btn-hero-main" onclick="openModal('signup')">ابدأ الآن — مجاناً</button>
+      <button class="btn-hero-sec" onclick="openModal('login')">سجّل دخول</button>
+    </div>
+  </div>
+
+  <div class="platforms-row">
+    <div class="plat-chip"><div class="plat-dot dot-ig"></div>Instagram</div>
+    <div class="plat-chip"><div class="plat-dot dot-fb"></div>Facebook</div>
+    <div class="plat-chip"><div class="plat-dot dot-tt"></div>TikTok قريباً</div>
+    <div class="plat-chip"><div class="plat-dot dot-yt"></div>YouTube قريباً</div>
+  </div>
+
+  <div class="features">
+    <div class="feat">
+      <div class="feat-icon">⚡</div>
+      <h3>نشر فوري</h3>
+      <p>اضغط زر واحد وينشر على كل منصاتك المختارة في نفس اللحظة</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🤖</div>
+      <h3>كابشن بالذكاء الاصطناعي</h3>
+      <p>يكتب لك كابشن وهاشتاقات مختلفة ومخصصة لكل منصة تلقائياً</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🔗</div>
+      <h3>ربط سهل</h3>
+      <p>اربط حساباتك مرة واحدة وانشر كل مرة بدون إعادة تسجيل</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📊</div>
+      <h3>سجل النشر</h3>
+      <p>تابع كل منشوراتك وشوف حالة كل نشر في مكان واحد</p>
+    </div>
+  </div>
+</div>
+
+<!-- APP PAGE -->
+<div class="page" id="appPage">
+  <div class="app-header">
+    <h2>انشر فيديوك 🎬</h2>
+    <p>اربط حساباتك ثم ارفع الفيديو واضغط نشر</p>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="stp on" id="stp1"><div class="stp-n">1</div><span>ربط الحسابات</span></div>
+    <div class="stp-line" id="stl1"></div>
+    <div class="stp" id="stp2"><div class="stp-n">2</div><span>الفيديو</span></div>
+    <div class="stp-line" id="stl2"></div>
+    <div class="stp" id="stp3"><div class="stp-n">3</div><span>الكابشن</span></div>
+    <div class="stp-line" id="stl3"></div>
+    <div class="stp" id="stp4"><div class="stp-n">4</div><span>النشر</span></div>
+  </div>
+
+  <!-- Connect Platforms -->
+  <div class="card">
+    <div class="card-head"><div class="c-icon">🔗</div>ربط حساباتك</div>
+    <div class="connect-bar">
+      <button class="conn-btn ig-btn" id="connIg" onclick="connectPlatform('instagram')">
+        <span class="conn-dot"></span> 📸 Instagram
+      </button>
+      <button class="conn-btn fb-btn" id="connFb" onclick="connectPlatform('facebook')">
+        <span class="conn-dot"></span> 📘 Facebook
+      </button>
+    </div>
+    <p style="font-size:12px;color:var(--muted)">⚠️ لأول مرة فقط — بعدها يتذكر حساباتك تلقائياً</p>
+  </div>
+
+  <!-- Upload -->
+  <div class="card">
+    <div class="card-head"><div class="c-icon">🎬</div>الفيديو</div>
+    <div class="drop" id="drop" onclick="document.getElementById('vIn').click()">
+      <span class="drop-ico">🎥</span>
+      <h3>اسحب الفيديو أو اضغط هنا</h3>
+      <p>MP4 · MOV · حتى 1GB</p>
+      <input type="file" id="vIn" accept="video/*">
+    </div>
+    <div class="prev-wrap" id="prevW">
+      <video id="vEl" controls></video>
+      <div class="prev-bar">
+        <div><div class="prev-name" id="vName"></div><div class="prev-size" id="vSize"></div></div>
+        <button class="btn-sm" onclick="resetVid()">↩ تغيير</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Target platforms -->
+  <div class="card">
+    <div class="card-head"><div class="c-icon">📱</div>اختر منصات النشر</div>
+    <div class="plat-grid">
+      <div class="plat-card ig sel" id="pcIg" onclick="togglePlat('ig')">
+        <div class="plat-logo ig-logo">📸</div>
+        <div class="plat-info"><div class="plat-name">Instagram</div><div class="plat-sub">ريلز</div></div>
+        <div class="plat-check">✓</div>
+      </div>
+      <div class="plat-card fb sel" id="pcFb" onclick="togglePlat('fb')">
+        <div class="plat-logo fb-logo">📘</div>
+        <div class="plat-info"><div class="plat-name">Facebook</div><div class="plat-sub">ريلز + صفحة</div></div>
+        <div class="plat-check">✓</div>
+      </div>
+      <div class="plat-card disabled">
+        <div class="plat-logo tt-logo">🎵</div>
+        <div class="plat-info"><div class="plat-name">TikTok</div><div class="plat-sub"><span class="coming">قريباً</span></div></div>
+      </div>
+      <div class="plat-card disabled">
+        <div class="plat-logo yt-logo">▶️</div>
+        <div class="plat-info"><div class="plat-name">YouTube</div><div class="plat-sub"><span class="coming">قريباً</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Caption -->
+  <div class="card">
+    <div class="card-head"><div class="c-icon">✍️</div>الكابشن</div>
+    <textarea class="inp" id="caption" placeholder="اكتب الكابشن، أو اضغط الزر بالأسفل..." maxlength="2200" oninput="document.getElementById('capChar').textContent=this.value.length+'/2200'"></textarea>
+    <div class="char" id="capChar">0/2200</div>
+    <button class="btn-ai" id="aiBtn" onclick="genCaption()">
+      <div class="spin" id="aiSpin"></div>
+      <span id="aiTxt">✨ اكتب لي كابشن + هاشتاقات بالذكاء الاصطناعي</span>
+    </button>
+  </div>
+
+  <!-- Publish -->
+  <div class="card">
+    <div class="card-head"><div class="c-icon">🚀</div>النشر المباشر</div>
+    <button class="btn-pub" id="pubBtn" onclick="publishAll()" disabled>
+      <div class="spin" id="pubSpin"></div>
+      <span id="pubTxt">🚀 انشر الآن على المنصات المختارة</span>
+    </button>
+    <div class="prog-wrap" id="progW">
+      <div class="prog-top"><span id="progLbl">جاري النشر...</span><span id="progPct">0%</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+    </div>
+    <div class="status" id="statusBox"></div>
+  </div>
+
+  <!-- History -->
+  <div class="card" id="histCard" style="display:none">
+    <div class="card-head"><div class="c-icon">📋</div>آخر المنشورات</div>
+    <div id="histList"></div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal-wrap">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h2 id="modalTitle">إنشاء حساب</h2>
+      <p id="modalSub">ابدأ النشر على كل المنصات مجاناً</p>
+      <div class="field" id="nameField">
+        <label>الاسم</label>
+        <input class="inp" type="text" id="authName" placeholder="اسمك">
+      </div>
+      <div class="field">
+        <label>البريد الإلكتروني</label>
+        <input class="inp" type="email" id="authEmail" placeholder="example@email.com">
+      </div>
+      <div class="field">
+        <label>كلمة المرور</label>
+        <input class="inp" type="password" id="authPass" placeholder="••••••••">
+      </div>
+      <div class="status" id="authStatus"></div>
+      <button class="btn-modal" id="authBtn" onclick="doAuth()">
+        <div class="spin" id="authSpin" style="border-top-color:#fff"></div>
+        <span id="authBtnTxt">إنشاء حساب</span>
+      </button>
+      <div class="modal-switch" id="modalSwitch">
+        عندك حساب؟ <a onclick="openModal('login')">سجّل دخول</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIF -->
+<div class="notif" id="notif"></div>
+
+<script>
+// ============================================================
+// CONFIG — ضع مفاتيحك هنا أو في متغيرات Vercel Environment
+// ============================================================
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const META_APP_ID  = 'YOUR_META_APP_ID';
+
+// ============================================================
+// SUPABASE MINI CLIENT
+// ============================================================
+const sb = {
+  async req(path, opts={}) {
+    const r = await fetch(SUPABASE_URL + path, {
+      ...opts,
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (getToken() || SUPABASE_KEY),
+        'Content-Type': 'application/json',
+        ...(opts.headers||{})
+      }
+    });
+    return r.json();
+  },
+  async signup(email, pass, name) {
+    return sb.req('/auth/v1/signup', {
+      method:'POST',
+      body: JSON.stringify({ email, password: pass, data: { name } })
+    });
+  },
+  async login(email, pass) {
+    return sb.req('/auth/v1/token?grant_type=password', {
+      method:'POST',
+      body: JSON.stringify({ email, password: pass })
+    });
+  },
+  async insertPost(data) {
+    return sb.req('/rest/v1/posts', {
+      method:'POST',
+      headers:{ 'Prefer':'return=representation' },
+      body: JSON.stringify(data)
+    });
+  },
+  async getPosts(userId) {
+    return sb.req(`/rest/v1/posts?user_id=eq.${userId}&order=created_at.desc&limit=10`);
+  }
+};
+
+function getToken() { return localStorage.getItem('pf_token'); }
+function setToken(t) { localStorage.setItem('pf_token', t); }
+function getUser()  { try { return JSON.parse(localStorage.getItem('pf_user')); } catch { return null; } }
+function setUser(u) { localStorage.setItem('pf_user', JSON.stringify(u)); }
+
+// ============================================================
+// STATE
+// ============================================================
+let videoFile = null;
+let selectedPlats = { ig: true, fb: true };
+let connectedAccounts = JSON.parse(localStorage.getItem('pf_accounts') || '{}');
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = () => {
+  const user = getUser();
+  if (user && getToken()) {
+    showApp(user);
+    handleOAuthCallback();
+  }
+};
+
+function handleOAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const platform = params.get('platform');
+  const token = params.get('token');
+  const pageId = params.get('page_id');
+  if (platform && token) {
+    connectedAccounts[platform] = { token, pageId };
+    localStorage.setItem('pf_accounts', JSON.stringify(connectedAccounts));
+    updateConnectBtns();
+    toast('✅ تم ربط ' + platform + ' بنجاح!', 'ok');
+    window.history.replaceState({}, '', '/');
+  }
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+let authMode = 'signup';
+
+function openModal(mode) {
+  authMode = mode;
+  document.getElementById('modalBg').classList.add('open');
+  document.getElementById('nameField').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('modalTitle').textContent = mode === 'signup' ? 'إنشاء حساب' : 'تسجيل الدخول';
+  document.getElementById('modalSub').textContent = mode === 'signup' ? 'ابدأ النشر مجاناً' : 'مرحباً بعودتك 👋';
+  document.getElementById('authBtnTxt').textContent = mode === 'signup' ? 'إنشاء حساب' : 'دخول';
+  document.getElementById('modalSwitch').innerHTML = mode === 'signup'
+    ? 'عندك حساب؟ <a onclick="openModal(\'login\')">سجّل دخول</a>'
+    : 'ما عندك حساب؟ <a onclick="openModal(\'signup\')">إنشاء حساب</a>';
+  clearAuthStatus();
+}
+
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+
+async function doAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value;
+  const name  = document.getElementById('authName').value.trim();
+  if (!email || !pass) { showAuthStatus('error','أدخل البريد وكلمة المرور'); return; }
+
+  setBtnLoading('authBtn','authSpin','authBtnTxt', true, authMode==='signup'?'جاري الإنشاء...':'جاري الدخول...');
+
+  try {
+    let data;
+    if (authMode === 'signup') {
+      data = await sb.signup(email, pass, name);
+    } else {
+      data = await sb.login(email, pass);
+    }
+
+    if (data.error || data.msg) {
+      showAuthStatus('error', data.error?.message || data.msg || 'حدث خطأ');
+    } else {
+      setToken(data.access_token);
+      setUser({ id: data.user?.id, email: data.user?.email, name });
+      closeModal();
+      showApp(getUser());
+      toast('🎉 أهلاً ' + (name || email) + '!', 'ok');
+    }
+  } catch(e) {
+    showAuthStatus('error', 'تأكد من الاتصال بالإنترنت');
+  }
+
+  setBtnLoading('authBtn','authSpin','authBtnTxt', false, authMode==='signup'?'إنشاء حساب':'دخول');
+}
+
+function showAuthStatus(type, msg) {
+  const s = document.getElementById('authStatus');
+  s.className = 'status ' + (type==='error'?'err':'ok');
+  s.textContent = msg;
+}
+function clearAuthStatus() {
+  const s = document.getElementById('authStatus');
+  s.className = 'status';
+  s.textContent = '';
+}
+
+function showApp(user) {
+  document.getElementById('landingPage').classList.remove('active');
+  document.getElementById('appPage').classList.add('active');
+  document.getElementById('guestNav').style.display = 'none';
+  document.getElementById('userNav').style.display = 'flex';
+  document.getElementById('userEmail').textContent = user.name || user.email;
+  updateConnectBtns();
+  loadHistory();
+  checkPubReady();
+}
+
+function logout() {
+  localStorage.removeItem('pf_token');
+  localStorage.removeItem('pf_user');
+  document.getElementById('landingPage').classList.add('active');
+  document.getElementById('appPage').classList.remove('active');
+  document.getElementById('guestNav').style.display = 'flex';
+  document.getElementById('userNav').style.display = 'none';
+}
+
+// ============================================================
+// CONNECT PLATFORMS (Meta OAuth)
+// ============================================================
+function connectPlatform(platform) {
+  const scope = platform === 'instagram'
+    ? 'instagram_basic,instagram_content_publish,pages_show_list'
+    : 'pages_manage_posts,pages_read_engagement,pages_show_list';
+
+  const redirect = encodeURIComponent(window.location.origin + '/api/oauth-callback?platform=' + platform);
+  const url = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${redirect}&scope=${scope}&response_type=code`;
+  window.location.href = url;
+}
+
+function updateConnectBtns() {
+  const igBtn = document.getElementById('connIg');
+  const fbBtn = document.getElementById('connFb');
+  if (connectedAccounts.instagram) {
+    igBtn.classList.add('connected');
+    igBtn.innerHTML = '<span class="conn-dot"></span> 📸 Instagram ✓';
+  }
+  if (connectedAccounts.facebook) {
+    fbBtn.classList.add('connected');
+    fbBtn.innerHTML = '<span class="conn-dot"></span> 📘 Facebook ✓';
+  }
+}
+
+// ============================================================
+// VIDEO UPLOAD
+// ============================================================
+const drop = document.getElementById('drop');
+const vIn  = document.getElementById('vIn');
+
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); handleVid(e.dataTransfer.files[0]); });
+vIn.addEventListener('change', e => handleVid(e.target.files[0]));
+
+function handleVid(f) {
+  if (!f || !f.type.startsWith('video/')) return;
+  videoFile = f;
+  document.getElementById('vEl').src = URL.createObjectURL(f);
+  document.getElementById('vName').textContent = f.name;
+  document.getElementById('vSize').textContent = fmtSize(f.size);
+  drop.style.display = 'none';
+  document.getElementById('prevW').style.display = 'block';
+  setStep(2);
+  checkPubReady();
+  toast('✅ تم اختيار الفيديو', 'ok');
+}
+
+function resetVid() {
+  videoFile = null;
+  document.getElementById('vEl').src = '';
+  drop.style.display = 'block';
+  document.getElementById('prevW').style.display = 'none';
+  vIn.value = '';
+  checkPubReady();
+}
+
+function fmtSize(b) {
+  if(b>1e9) return (b/1e9).toFixed(1)+' GB';
+  if(b>1e6) return (b/1e6).toFixed(1)+' MB';
+  return (b/1e3).toFixed(0)+' KB';
+}
+
+// ============================================================
+// PLATFORMS TOGGLE
+// ============================================================
+function togglePlat(id) {
+  selectedPlats[id] = !selectedPlats[id];
+  const el = document.getElementById('pc' + id.charAt(0).toUpperCase() + id.slice(1));
+  el.classList.toggle('sel', selectedPlats[id]);
+  checkPubReady();
+}
+
+// ============================================================
+// AI CAPTION
+// ============================================================
+async function genCaption() {
+  setBtnLoading('aiBtn','aiSpin','aiTxt', true, 'جاري الكتابة...');
+  try {
+    const topic = document.getElementById('caption').value || 'فيديو على السوشيال ميديا';
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: 'أنت خبير سوشيال ميديا. اكتب كابشن جذاب بالعربي مع إيموجي وهاشتاقات مناسبة. أجب بالكابشن فقط بدون مقدمة.',
+        messages: [{ role:'user', content:`كابشن ريلز احترافي جذاب لفيديو موضوعه: "${topic}"` }]
+      })
+    });
+    const d = await res.json();
+    document.getElementById('caption').value = d.content[0].text;
+    document.getElementById('capChar').textContent = d.content[0].text.length + '/2200';
+    setStep(3);
+    toast('✨ تم توليد الكابشن!', 'ok');
+  } catch {
+    document.getElementById('caption').value = '🔥 محتوى حصري!\n\n💫 شارك مع أصحابك\n💬 رأيك في التعليقات\n\n#ريلز #انستا #محتوى_عربي #trending #viral';
+    toast('تم إنشاء كابشن افتراضي', 'ok');
+  }
+  setBtnLoading('aiBtn','aiSpin','aiTxt', false, '🔄 أعد التوليد');
+}
+
+// ============================================================
+// PUBLISH
+// ============================================================
+function checkPubReady() {
+  const hasVid = !!videoFile;
+  const hasPlat = selectedPlats.ig || selectedPlats.fb;
+  document.getElementById('pubBtn').disabled = !(hasVid && hasPlat);
+}
+
+async function publishAll() {
+  const caption = document.getElementById('caption').value.trim();
+  const user = getUser();
+  if (!user) { openModal('login'); return; }
+
+  setBtnLoading('pubBtn','pubSpin','pubTxt', true, 'جاري النشر...');
+  showProg('رفع الفيديو...', 5);
+  hideStatus();
+  setStep(4);
+
+  const results = [];
+  let publicUrl;
+
+  // 1. Upload video to get public URL
+  try {
+    const fd = new FormData();
+    fd.append('file', videoFile);
+    showProg('رفع الفيديو للخادم...', 15);
+    const upRes = await fetch('https://0x0.st', { method:'POST', body:fd });
+    if (!upRes.ok) throw new Error('فشل رفع الفيديو');
+    publicUrl = (await upRes.text()).trim();
+    showProg('تم رفع الفيديو ✓', 35);
+  } catch(e) {
+    hideProg();
+    showStatus('err', '❌ فشل رفع الفيديو: ' + e.message);
+    setBtnLoading('pubBtn','pubSpin','pubTxt', false, '🚀 انشر الآن');
+    return;
+  }
+
+  // 2. Publish to Instagram
+  if (selectedPlats.ig && connectedAccounts.instagram) {
+    showProg('جاري النشر على Instagram...', 50);
+    const r = await publishToIG(publicUrl, caption, connectedAccounts.instagram);
+    results.push({ platform:'Instagram', ...r });
+    showProg(r.ok ? 'Instagram ✓' : 'Instagram ✗', 70);
+  }
+
+  // 3. Publish to Facebook
+  if (selectedPlats.fb && connectedAccounts.facebook) {
+    showProg('جاري النشر على Facebook...', 80);
+    const r = await publishToFB(publicUrl, caption, connectedAccounts.facebook);
+    results.push({ platform:'Facebook', ...r });
+    showProg(r.ok ? 'Facebook ✓' : 'Facebook ✗', 95);
+  }
+
+  // 4. Handle platforms not connected
+  if (selectedPlats.ig && !connectedAccounts.instagram) results.push({ platform:'Instagram', ok:false, msg:'الحساب غير مربوط' });
+  if (selectedPlats.fb && !connectedAccounts.facebook) results.push({ platform:'Facebook', ok:false, msg:'الحساب غير مربوط' });
+
+  showProg('اكتمل!', 100);
+  setTimeout(hideProg, 1500);
+
+  // 5. Show result
+  const allOk = results.every(r => r.ok);
+  const summary = results.map(r => (r.ok ? '✅' : '❌') + ' ' + r.platform + (r.msg ? ' — ' + r.msg : '')).join('\n');
+  showStatus(allOk ? 'ok' : 'err', summary);
+
+  // 6. Save to Supabase
+  try {
+    await sb.insertPost({
+      user_id: user.id,
+      caption,
+      video_name: videoFile.name,
+      platforms: results.map(r=>r.platform).join(','),
+      status: allOk ? 'success' : 'partial',
+      created_at: new Date().toISOString()
+    });
+    loadHistory();
+  } catch {}
+
+  if (allOk) toast('🎉 تم النشر بنجاح على كل المنصات!', 'ok');
+  else toast('⚠️ بعض المنصات تحتاج ربط', 'bad');
+
+  setBtnLoading('pubBtn','pubSpin','pubTxt', false, '🚀 انشر مرة أخرى');
+}
+
+async function publishToIG(videoUrl, caption, account) {
+  try {
+    const igId = account.igUserId;
+    const token = account.token;
+
+    // Create container
+    const cRes = await fetch(`https://graph.facebook.com/v19.0/${igId}/media`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ media_type:'REELS', video_url:videoUrl, caption, share_to_feed:true, access_token:token })
+    });
+    const cData = await cRes.json();
+    if (cData.error) return { ok:false, msg: cData.error.message };
+
+    // Wait for processing
+    await waitForIG(cData.id, token);
+
+    // Publish
+    const pRes = await fetch(`https://graph.facebook.com/v19.0/${igId}/media_publish`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ creation_id: cData.id, access_token: token })
+    });
+    const pData = await pRes.json();
+    if (pData.error) return { ok:false, msg: pData.error.message };
+    return { ok:true, id: pData.id };
+  } catch(e) { return { ok:false, msg: e.message }; }
+}
+
+async function publishToFB(videoUrl, caption, account) {
+  try {
+    const pageId = account.pageId;
+    const token  = account.token;
+    const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/videos`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ file_url: videoUrl, description: caption, published: true, access_token: token })
+    });
+    const data = await res.json();
+    if (data.error) return { ok:false, msg: data.error.message };
+    return { ok:true, id: data.id };
+  } catch(e) { return { ok:false, msg: e.message }; }
+}
+
+async function waitForIG(containerId, token) {
+  for(let i=0;i<20;i++) {
+    await sleep(4000);
+    const r = await fetch(`https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${token}`);
+    const d = await r.json();
+    if(d.status_code === 'FINISHED') return;
+    if(d.status_code === 'ERROR') throw new Error('فشل معالجة الفيديو في إنستا');
+  }
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+async function loadHistory() {
+  const user = getUser();
+  if (!user) return;
+  try {
+    const posts = await sb.getPosts(user.id);
+    if (!Array.isArray(posts) || posts.length === 0) return;
+    document.getElementById('histCard').style.display = 'block';
+    document.getElementById('histList').innerHTML = posts.map(p => `
+      <div class="hist-item">
+        <div class="hist-icon">🎬</div>
+        <div class="hist-info">
+          <div class="hist-title">${p.video_name || 'فيديو'}</div>
+          <div class="hist-sub">${p.platforms} · ${new Date(p.created_at).toLocaleDateString('ar')}</div>
+        </div>
+        <span class="hist-status ${p.status==='success'?'hist-ok':'hist-err'}">${p.status==='success'?'✅ نُشر':'⚠️ جزئي'}</span>
+      </div>
+    `).join('');
+  } catch {}
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+function setBtnLoading(btnId, spinId, txtId, loading, txt) {
+  document.getElementById(btnId).disabled = loading;
+  document.getElementById(spinId).style.display = loading ? 'block' : 'none';
+  document.getElementById(txtId).textContent = txt;
+}
+
+function showProg(lbl, pct) {
+  document.getElementById('progW').style.display = 'block';
+  document.getElementById('progLbl').textContent = lbl;
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('progFill').style.width = pct + '%';
+}
+function hideProg() { document.getElementById('progW').style.display = 'none'; }
+
+function showStatus(type, msg) {
+  const s = document.getElementById('statusBox');
+  s.className = 'status ' + type;
+  s.style.whiteSpace = 'pre-line';
+  s.textContent = msg;
+}
+function hideStatus() {
+  const s = document.getElementById('statusBox');
+  s.className = 'status';
+  s.textContent = '';
+}
+
+function toast(msg, type='ok') {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.className = 'notif ' + type + ' show';
+  setTimeout(() => n.classList.remove('show'), 3500);
+}
+
+function setStep(n) {
+  for(let i=1;i<=4;i++) {
+    const s = document.getElementById('stp'+i);
+    s.classList.remove('on','done');
+    if(i<n) s.classList.add('done');
+    else if(i===n) s.classList.add('on');
+  }
+  for(let i=1;i<=3;i++) {
+    document.getElementById('stl'+i).style.background = i<n ? 'var(--success)' : 'var(--border)';
+  }
+}
+</script>
+</body>
+</html>
