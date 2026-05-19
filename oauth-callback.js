@@ -1,16 +1,13 @@
 // api/oauth-callback.js
-// Vercel Serverless Function — يستقبل OAuth callback من Meta
-
 export default async function handler(req, res) {
-  const { code, platform } = req.query;
+  const { code, platform, error } = req.query;
+  const BASE_URL = 'https://publishing-tool-eight.vercel.app';
 
-  if (!code || !platform) {
-    return res.redirect('/?error=missing_params');
-  }
+  if (error) return res.redirect(`${BASE_URL}/?conn_error=${encodeURIComponent(error)}`);
+  if (!code || !platform) return res.redirect(`${BASE_URL}/?conn_error=missing_params`);
 
   const APP_ID     = process.env.META_APP_ID;
   const APP_SECRET = process.env.META_APP_SECRET;
-  const BASE_URL   = process.env.NEXT_PUBLIC_BASE_URL || `https://${req.headers.host}`;
   const REDIRECT   = `${BASE_URL}/api/oauth-callback?platform=${platform}`;
 
   try {
