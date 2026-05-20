@@ -475,14 +475,27 @@ window.onload = () => {
 
 function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
-  const platform = params.get('platform');
-  const token = params.get('token');
-  const pageId = params.get('page_id');
-  if (platform && token) {
-    connectedAccounts[platform] = { token, pageId };
+  const platform = params.get('conn_platform');
+  const token    = params.get('conn_token');
+  const pageId   = params.get('conn_page_id');
+  const ok       = params.get('conn_ok');
+  const err      = params.get('conn_error');
+
+  if (err) {
+    toast('❌ فشل الربط: ' + decodeURIComponent(err), 'bad');
+    window.history.replaceState({}, '', '/');
+    return;
+  }
+
+  if (ok && platform && token) {
+    if (platform === 'instagram') {
+      connectedAccounts.instagram = { token: decodeURIComponent(token), igUserId: pageId };
+    } else {
+      connectedAccounts.facebook = { token: decodeURIComponent(token), pageId };
+    }
     localStorage.setItem('pf_accounts', JSON.stringify(connectedAccounts));
     updateConnectBtns();
-    toast('✅ تم ربط ' + platform + ' بنجاح!', 'ok');
+    toast('✅ تم ربط ' + (platform === 'instagram' ? 'Instagram' : 'Facebook') + ' بنجاح!', 'ok');
     window.history.replaceState({}, '', '/');
   }
 }
